@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { createClient } from "@supabase/supabase-js";
 import type { User } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabase";
 import jsPDF from "jspdf";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,15 +17,6 @@ import {
   YAxis,
   CartesianGrid,
 } from "recharts";
-
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error("Supabase env belum diisi. Cek VITE_SUPABASE_URL dan VITE_SUPABASE_ANON_KEY.");
-}
-
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 type Menu = "dashboard" | "tasks" | "finance" | "planning" | "calendar";
 
@@ -598,8 +589,8 @@ export default function EduDashboard() {
 
         <div className="flex flex-col items-center bg-gradient-to-br from-fuchsia-500/20 via-indigo-500/20 to-cyan-500/20 backdrop-blur-xl rounded-3xl p-5 text-white mb-6 shadow-xl border border-white/10">
           <img src={profileImage} className="w-24 h-24 rounded-full object-cover border-4 border-cyan-400 shadow-lg shadow-cyan-400/20 mb-3" />
-          <p className="font-semibold">Panji</p>
-          <p className="text-sm text-slate-300">Real productivity dashboard</p>
+          <p className="font-semibold">Panji Wahyu Nugroho</p>
+          <p className="text-sm text-slate-300">Manage Study & Finance</p>
 
           <label className={`mt-4 cursor-pointer px-4 py-2 rounded-xl text-sm shadow ${primaryButton}`}>
             Upload Foto
@@ -637,7 +628,7 @@ export default function EduDashboard() {
       <main className="relative z-10 flex-1 p-8 overflow-y-auto">
         {activeMenu === "dashboard" && (
           <>
-            <h1 className="text-4xl font-black mb-2">Halo Panji 👋</h1>
+            <h1 className="text-4xl font-black mb-2">Welcome Back, Panji Wahyu Nugroho👋</h1>
             <p className="text-slate-400 mb-6">{randomQuote}</p>
 
             <div className="grid grid-cols-4 gap-5 mb-8">
