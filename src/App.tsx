@@ -628,7 +628,7 @@ export default function EduDashboard() {
       <main className="relative z-10 flex-1 p-8 overflow-y-auto">
         {activeMenu === "dashboard" && (
           <>
-            <h1 className="text-4xl font-black mb-2">Welcome Back, Panji Wahyu Nugroho👋</h1>
+            <h1 className="text-4xl font-black mb-2">Halo Panji Preview 🚀</h1>
             <p className="text-slate-400 mb-6">{randomQuote}</p>
 
             <div className="grid grid-cols-4 gap-5 mb-8">
