@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import { createClient } from "@supabase/supabase-js";
 import type { User } from "@supabase/supabase-js";
-import { supabase } from "@/lib/supabase";
 import jsPDF from "jspdf";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,15 @@ import {
   YAxis,
   CartesianGrid,
 } from "recharts";
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error("Supabase env belum diisi. Cek VITE_SUPABASE_URL dan VITE_SUPABASE_ANON_KEY.");
+}
+
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 type Menu = "dashboard" | "tasks" | "finance" | "planning" | "calendar";
 
@@ -45,11 +54,18 @@ type Plan = {
   plan_time: string;
 };
 
+type Holiday = {
+  date: string;
+  localName: string;
+  name: string;
+};
+
 type CalendarDay = {
   date: string;
   label: number;
   tasks: Task[];
   plans: Plan[];
+  holiday?: Holiday;
 } | null;
 
 export default function EduDashboard() {
@@ -80,6 +96,7 @@ export default function EduDashboard() {
 
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [holidays, setHolidays] = useState<Holiday[]>([]);
 
   const [profileImage, setProfileImage] = useState(
     "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&h=300&fit=crop&crop=faces"
@@ -109,6 +126,22 @@ export default function EduDashboard() {
   useEffect(() => {
     if (user) loadData();
   }, [user]);
+
+  useEffect(() => {
+    const fetchHolidays = async () => {
+      try {
+        const year = currentDate.getFullYear();
+        const res = await fetch(`https://date.nager.at/api/v3/PublicHolidays/${year}/ID`);
+        const data: Holiday[] = await res.json();
+        setHolidays(data);
+      } catch (error) {
+        console.error("Gagal mengambil tanggal merah:", error);
+        setHolidays([]);
+      }
+    };
+
+    fetchHolidays();
+  }, [currentDate]);
 
   useEffect(() => {
     if (!tasks.length || !("Notification" in window)) return;
@@ -460,6 +493,15 @@ export default function EduDashboard() {
     });
   }, [transactions]);
 
+
+  const formatLocalDate = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+};
+
   const calendarDaysMonthly = useMemo<CalendarDay[]>(() => {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
@@ -471,18 +513,19 @@ export default function EduDashboard() {
 
     for (let i = 1; i <= daysInMonth; i++) {
       const date = new Date(year, month, i);
-      const key = date.toISOString().slice(0, 10);
+      const key = formatLocalDate(date);
 
       days.push({
         date: key,
         label: i,
         tasks: tasks.filter((task) => task.deadline === key),
         plans: plans.filter((plan) => plan.plan_date === key),
+        holiday: holidays.find((holiday) => holiday.date === key),
       });
     }
 
     return days;
-  }, [tasks, plans, currentDate]);
+  }, [tasks, plans, holidays, currentDate]);
 
   const exportFinancePDF = () => {
     const doc = new jsPDF();
@@ -589,8 +632,8 @@ export default function EduDashboard() {
 
         <div className="flex flex-col items-center bg-gradient-to-br from-fuchsia-500/20 via-indigo-500/20 to-cyan-500/20 backdrop-blur-xl rounded-3xl p-5 text-white mb-6 shadow-xl border border-white/10">
           <img src={profileImage} className="w-24 h-24 rounded-full object-cover border-4 border-cyan-400 shadow-lg shadow-cyan-400/20 mb-3" />
-          <p className="font-semibold">Panji Wahyu Nugroho</p>
-          <p className="text-sm text-slate-300">Manage Study & Finance</p>
+          <p className="font-semibold">Panji</p>
+          <p className="text-sm text-slate-300">Real productivity dashboard</p>
 
           <label className={`mt-4 cursor-pointer px-4 py-2 rounded-xl text-sm shadow ${primaryButton}`}>
             Upload Foto
@@ -628,7 +671,7 @@ export default function EduDashboard() {
       <main className="relative z-10 flex-1 p-8 overflow-y-auto">
         {activeMenu === "dashboard" && (
           <>
-            <h1 className="text-4xl font-black mb-2">Halo, Panji 🚀</h1>
+            <h1 className="text-4xl font-black mb-2">Halo Panji 👋</h1>
             <p className="text-slate-400 mb-6">{randomQuote}</p>
 
             <div className="grid grid-cols-4 gap-5 mb-8">
@@ -921,7 +964,15 @@ export default function EduDashboard() {
                     }}
                   >
                     <CardContent className="p-2">
-                      <p className="text-sm text-slate-300 mb-2">{day.label}</p>
+                      <p className={`text-sm mb-2 ${day.holiday ? "text-rose-300 font-bold" : "text-slate-300"}`}>
+                        {day.label}
+                      </p>
+
+                      {day.holiday && (
+                        <div className="text-xs p-2 mb-2 rounded-xl border bg-rose-500/25 border-rose-400/30 text-rose-100">
+                          🇮🇩 {day.holiday.localName}
+                        </div>
+                      )}
 
                       {day.tasks.map((task) => (
                         <div
