@@ -120,7 +120,14 @@ export default function EduDashboard() {
 
   const [filterStartDate, setFilterStartDate] = useState("");
   const [filterEndDate, setFilterEndDate] = useState("");
-  const [weeklyBudget, setWeeklyBudget] = useState(0);
+  const [weeklyBudget, setWeeklyBudget] = useState(() => {
+    const key = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`;
+    return Number(localStorage.getItem(`weekly-budget-${key}`) || 0);
+  });
+  const [monthlySavingTarget, setMonthlySavingTarget] = useState(() => {
+    const key = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`;
+    return Number(localStorage.getItem(`saving-target-${key}`) || 500000);
+  });
 
   const [plans, setPlans] = useState<Plan[]>([]);
   const [planTitle, setPlanTitle] = useState("");
@@ -160,6 +167,16 @@ export default function EduDashboard() {
   useEffect(() => {
     if (user) loadData();
   }, [user]);
+
+  useEffect(() => {
+    const key = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`;
+    localStorage.setItem(`saving-target-${key}`, String(monthlySavingTarget));
+  }, [monthlySavingTarget]);
+
+  useEffect(() => {
+    const key = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`;
+    localStorage.setItem(`weekly-budget-${key}`, String(weeklyBudget));
+  }, [weeklyBudget]);
 
   useEffect(() => {
     const fetchHolidays = async () => {
@@ -439,6 +456,26 @@ export default function EduDashboard() {
     .reduce((total, item) => total + Number(item.amount), 0);
 
   const remainingMoney = totalIncome - totalExpense - totalSaving;
+
+  const monthlySaving = useMemo(() => {
+    const now = new Date();
+    return transactions
+      .filter((item) => {
+        const date = new Date(item.transaction_date);
+        return item.type === "saving" && date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+      })
+      .reduce((total, item) => total + Number(item.amount), 0);
+  }, [transactions]);
+
+  const savingTargetProgress = monthlySavingTarget <= 0 ? 0 : Math.min(100, Math.round((monthlySaving / monthlySavingTarget) * 100));
+  const remainingSavingTarget = Math.max(0, monthlySavingTarget - monthlySaving);
+  const remainingWeeksThisMonth = useMemo(() => {
+    const now = new Date();
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const remainingDays = Math.max(1, lastDay.getDate() - now.getDate() + 1);
+    return Math.max(1, Math.ceil(remainingDays / 7));
+  }, []);
+  const weeklySavingNeeded = Math.ceil(remainingSavingTarget / remainingWeeksThisMonth);
 
   const sortedTasks = useMemo(() => {
     return [...tasks].sort((a, b) => {
@@ -748,12 +785,13 @@ export default function EduDashboard() {
             <h1 className="text-4xl font-black mb-2">Halo Panji 👋</h1>
             <p className="text-slate-400 mb-6">{randomQuote}</p>
 
-            <div className="grid grid-cols-4 gap-5 mb-8">
+            <div className="grid grid-cols-5 gap-5 mb-8">
               {[
                 ["Total Tugas", tasks.length, "text-sky-300"],
                 ["Tugas Selesai", completedTasks, "text-emerald-300"],
                 ["Tabungan", formatRupiah(totalSaving), "text-cyan-300"],
                 ["Sisa Uang", formatRupiah(remainingMoney), "text-fuchsia-300"],
+                ["Target Bulanan", `${savingTargetProgress}%`, "text-amber-300"],
               ].map(([title, value, color]) => (
                 <Card key={title} className={`${cardClass} hover:scale-[1.02] transition-all duration-300`}>
                   <CardContent className="p-5">
@@ -763,6 +801,51 @@ export default function EduDashboard() {
                 </Card>
               ))}
             </div>
+
+            <Card className={`${cardClass} mb-6`}>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between gap-4 mb-4">
+                  <div>
+                    <h2 className="text-xl font-bold">Target Tabungan Bulanan</h2>
+                    <p className="text-sm text-slate-400">Atur target, lihat progres, dan nominal yang perlu ditabung per minggu.</p>
+                  </div>
+                  <Input
+                    className={`${inputClass} max-w-56`}
+                    type="number"
+                    value={monthlySavingTarget || ""}
+                    onChange={(e) => setMonthlySavingTarget(Number(e.target.value))}
+                    placeholder="Contoh: 500000"
+                  />
+                </div>
+
+                <div className="grid grid-cols-4 gap-4 mb-4 text-sm">
+                  <div className="rounded-2xl bg-white/5 border border-white/10 p-4">
+                    <p className="text-slate-400">Target bulan ini</p>
+                    <p className="font-bold text-amber-300">{formatRupiah(monthlySavingTarget)}</p>
+                  </div>
+                  <div className="rounded-2xl bg-white/5 border border-white/10 p-4">
+                    <p className="text-slate-400">Sudah terkumpul</p>
+                    <p className="font-bold text-cyan-300">{formatRupiah(monthlySaving)}</p>
+                  </div>
+                  <div className="rounded-2xl bg-white/5 border border-white/10 p-4">
+                    <p className="text-slate-400">Sisa target</p>
+                    <p className="font-bold text-rose-300">{formatRupiah(remainingSavingTarget)}</p>
+                  </div>
+                  <div className="rounded-2xl bg-white/5 border border-white/10 p-4">
+                    <p className="text-slate-400">Per minggu</p>
+                    <p className="font-bold text-emerald-300">{formatRupiah(weeklySavingNeeded)}</p>
+                  </div>
+                </div>
+
+                <div className="h-4 w-full rounded-full bg-white/10 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-fuchsia-500 via-indigo-500 to-cyan-400"
+                    style={{ width: `${savingTargetProgress}%` }}
+                  />
+                </div>
+                <p className="text-sm text-slate-400 mt-2">Progress: {savingTargetProgress}% dari target bulanan</p>
+              </CardContent>
+            </Card>
 
             <Card className={`${cardClass} mb-6`}>
               <CardContent className="p-6">
@@ -917,17 +1000,34 @@ export default function EduDashboard() {
 
             <Card className={`${cardClass} mb-6`}>
               <CardContent className="p-5">
-                <h2 className="text-xl font-bold mb-4">Budget Mingguan</h2>
-                <div className="flex gap-3 items-center">
-                  <Input
-                    className={inputClass}
-                    type="number"
-                    placeholder="Contoh: 150000"
-                    value={weeklyBudget || ""}
-                    onChange={(e) => setWeeklyBudget(Number(e.target.value))}
-                  />
-                  <div className="text-sm text-slate-400">
-                    Pengeluaran minggu ini: <span className="text-rose-300 font-semibold">{formatRupiah(weeklyExpense)}</span>
+                <h2 className="text-xl font-bold mb-4">Target Tabungan & Budget</h2>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-slate-400 mb-2">Target tabungan bulanan</p>
+                    <Input
+                      className={inputClass}
+                      type="number"
+                      placeholder="Contoh: 500000"
+                      value={monthlySavingTarget || ""}
+                      onChange={(e) => setMonthlySavingTarget(Number(e.target.value))}
+                    />
+                    <p className="text-sm text-slate-400 mt-2">
+                      Harus nabung per minggu: <span className="text-emerald-300 font-semibold">{formatRupiah(weeklySavingNeeded)}</span>
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-sm text-slate-400 mb-2">Budget pengeluaran mingguan</p>
+                    <Input
+                      className={inputClass}
+                      type="number"
+                      placeholder="Contoh: 150000"
+                      value={weeklyBudget || ""}
+                      onChange={(e) => setWeeklyBudget(Number(e.target.value))}
+                    />
+                    <p className="text-sm text-slate-400 mt-2">
+                      Pengeluaran minggu ini: <span className="text-rose-300 font-semibold">{formatRupiah(weeklyExpense)}</span>
+                    </p>
                   </div>
                 </div>
               </CardContent>
