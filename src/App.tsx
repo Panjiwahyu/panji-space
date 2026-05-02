@@ -144,10 +144,11 @@ export default function EduDashboard() {
 
   const inputClass = "h-10 rounded-xl bg-[#0b1120]/85 border-[#273449] text-slate-100 placeholder:text-slate-500 focus-visible:ring-2 focus-visible:ring-cyan-300/25 focus-visible:border-cyan-300/40 transition-all";
   const selectClass = "h-10 rounded-xl border border-[#273449] px-3 bg-[#0b1120]/85 text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-300/25 transition-all";
-  const cardClass = "rounded-2xl bg-[#101827]/88 border border-[#243044] shadow-[0_18px_60px_rgba(0,0,0,0.22)] hover:bg-[#121d2f] hover:border-cyan-300/20 transition-all duration-200";
-  const primaryButton = "h-10 rounded-xl bg-gradient-to-r from-slate-200 via-cyan-200 to-sky-300 text-slate-950 font-semibold shadow-[0_12px_30px_rgba(34,211,238,0.12)] hover:brightness-105 active:scale-[0.99] transition-all";
-  const secondaryButton = "h-10 rounded-xl bg-[#101827] border border-[#273449] text-slate-200 hover:bg-[#162237] transition-all";
-  const premiumPanel = "rounded-2xl bg-[#101827]/90 border border-[#243044] shadow-[0_18px_60px_rgba(0,0,0,0.22)]";
+  const cardClass = "rounded-2xl bg-[#101827]/88 border border-[#243044] shadow-[0_18px_60px_rgba(0,0,0,0.18)] hover:bg-[#121d2f] hover:border-cyan-300/20 hover:-translate-y-0.5 hover:shadow-[0_22px_70px_rgba(0,0,0,0.24)] transition-all duration-300";
+  const primaryButton = "h-10 rounded-xl bg-gradient-to-r from-slate-100 via-cyan-100 to-sky-200 text-slate-950 font-semibold shadow-[0_12px_30px_rgba(34,211,238,0.10)] hover:brightness-105 hover:-translate-y-0.5 active:scale-[0.99] transition-all duration-300";
+  const secondaryButton = "h-10 rounded-xl bg-[#101827] border border-[#273449] text-slate-200 hover:bg-[#162237] hover:border-cyan-300/15 transition-all duration-300";
+  const premiumPanel = "rounded-2xl bg-[#101827]/90 border border-[#243044] shadow-[0_18px_60px_rgba(0,0,0,0.18)] hover:border-cyan-300/15 transition-all duration-300";
+  const emptyStateClass = "rounded-2xl border border-dashed border-slate-800 bg-slate-900/35 p-6 text-center text-sm text-slate-500";
 
   useEffect(() => {
     const initAuth = async () => {
@@ -414,7 +415,7 @@ export default function EduDashboard() {
 
   const getTaskColor = (task: Task) => {
     if (task.done) return "bg-emerald-500/25 border-emerald-400/30 text-emerald-100";
-    if (task.priority === "high") return "bg-fuchsia-500/25 border-fuchsia-400/30 text-fuchsia-100";
+    if (task.priority === "high") return "bg-rose-500/18 border-rose-400/25 text-rose-100";
 
     const today = new Date();
     const due = new Date(task.deadline);
@@ -696,7 +697,7 @@ export default function EduDashboard() {
 
         <Card className="relative z-10 w-full max-w-md bg-slate-950/45 border border-slate-800 backdrop-blur-xl rounded-3xl shadow-2xl">
           <CardContent className="p-8">
-            <h1 className="text-2xl md:text-3xl font-semibold tracking-tight mb-2 bg-gradient-to-r from-fuchsia-400 via-indigo-300 to-cyan-300 bg-clip-text text-transparent">
+            <h1 className="text-2xl md:text-3xl font-semibold tracking-tight mb-2 bg-gradient-to-r from-slate-100 via-cyan-100 to-sky-200 bg-clip-text text-transparent">
               Panji Space
             </h1>
             <p className="text-slate-400 mb-6">Login untuk sinkronisasi tugas, keuangan, planning, dan calendar kamu.</p>
@@ -725,12 +726,27 @@ export default function EduDashboard() {
 
   return (
     <div className="relative flex min-h-screen bg-[#060a12] text-slate-100 overflow-hidden selection:bg-cyan-300/25">
+      <style>{`
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes softPulse {
+          0%, 100% { opacity: .55; transform: scale(1); }
+          50% { opacity: .9; transform: scale(1.04); }
+        }
+        .animate-fade-up { animation: fadeUp .42s ease both; }
+        .soft-pulse { animation: softPulse 3.8s ease-in-out infinite; }
+        .pro-scroll::-webkit-scrollbar { width: 7px; height: 7px; }
+        .pro-scroll::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 999px; }
+        .pro-scroll::-webkit-scrollbar-track { background: transparent; }
+      `}</style>
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_0%,rgba(34,211,238,0.10),transparent_28%),radial-gradient(circle_at_85%_12%,rgba(34,211,238,0.09),transparent_26%),linear-gradient(180deg,rgba(15,23,42,0.18),rgba(7,11,20,0.98))]" />
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.025)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.025)_1px,transparent_1px)] bg-[size:56px_56px] opacity-30" />
 
       <aside className="relative z-20 hidden lg:flex w-[276px] min-h-screen flex-col border-r border-[#243044] bg-[#070b14]/95 p-5 backdrop-blur-xl">
         <div className="mb-8 flex items-center gap-3 px-1 py-1">
-          <div className="grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-slate-200 via-cyan-200 to-sky-300 text-sm font-black text-slate-950 shadow-[0_12px_32px_rgba(34,211,238,0.14)]">PS</div>
+          <div className="grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-slate-200 via-cyan-100 to-sky-200 text-sm font-black text-slate-950 shadow-[0_12px_32px_rgba(34,211,238,0.12)] soft-pulse">PS</div>
           <div>
             <div className="text-lg font-bold tracking-tight text-white">Panji Space</div>
             <p className="text-xs text-slate-500">Focus • Money • Plan</p>
@@ -741,7 +757,7 @@ export default function EduDashboard() {
           <div className="flex items-center gap-3">
             <div className="relative">
               <img src={profileImage} className="h-11 w-11 rounded-2xl object-cover ring-1 ring-cyan-200/25" />
-              <span className="absolute -right-1 -top-1 h-3.5 w-3.5 rounded-full border-2 border-[#0b1120] bg-emerald-400 shadow-[0_0_18px_rgba(52,211,153,0.7)]" />
+              <span className="absolute -right-1 -top-1 h-3.5 w-3.5 rounded-full border-2 border-[#0b1120] bg-emerald-400 shadow-[0_0_14px_rgba(52,211,153,0.45)]" />
             </div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold text-white">{displayName}</p>
@@ -799,7 +815,7 @@ export default function EduDashboard() {
         ))}
       </div>
 
-      <main className="relative z-10 flex-1 p-4 pb-28 md:p-5 xl:p-7 overflow-y-auto">
+      <main className="pro-scroll relative z-10 flex-1 p-4 pb-28 md:p-5 xl:p-7 overflow-y-auto animate-fade-up">
         {activeMenu === "dashboard" && (
           <>
             <div className="mb-6 grid grid-cols-1 gap-4 xl:grid-cols-[1fr_320px]">
@@ -807,7 +823,10 @@ export default function EduDashboard() {
                 <CardContent className="p-5">
                   <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                     <div>
-                      <p className="mb-2 text-xs font-medium tracking-[0.14em] uppercase text-cyan-200/60">Workspace</p>
+                      <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-cyan-200/10 bg-cyan-300/5 px-3 py-1 text-[11px] font-medium text-cyan-100/70">
+                        <span className="h-1.5 w-1.5 rounded-full bg-cyan-300 soft-pulse" />
+                        Workspace aktif
+                      </div>
                       <h1 className="max-w-2xl text-2xl font-semibold tracking-tight text-white md:text-3xl">
                         Halo, {displayName} 👋
                       </h1>
@@ -864,6 +883,7 @@ export default function EduDashboard() {
               ].map(([title, value, color, desc, badge]) => (
                 <Card key={title} className="group max-w-full overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/65 transition-all duration-200 hover:bg-slate-900 hover:border-slate-700">
                   <CardContent className="p-4">
+                    <div className="mb-3 h-1 w-9 rounded-full bg-cyan-300/45" />
                     <div className="mb-3 flex items-start justify-between">
                       <p className="text-xs font-medium text-slate-500">{title}</p>
                       <span className={`rounded-full px-1.5 py-0.5 text-[9px] font-bold ${badge}`}>●</span>
@@ -1050,7 +1070,7 @@ export default function EduDashboard() {
               </CardContent>
             </Card>
 
-            {tasks.length === 0 && <p className="text-slate-400">Belum ada tugas kuliah.</p>}
+            {tasks.length === 0 && <div className={emptyStateClass}>Belum ada tugas kuliah. Tambahkan tugas pertama agar dashboard mulai terasa hidup.</div>}
 
             {sortedTasks.map((task) => (
               <div key={task.id} className={`p-4 mb-3 rounded-3xl border shadow flex justify-between items-center ${getTaskColor(task)}`}>
@@ -1088,7 +1108,7 @@ export default function EduDashboard() {
                 ["Pemasukan", formatRupiah(filteredIncome), "text-emerald-300"],
                 ["Pengeluaran", formatRupiah(filteredExpense), "text-rose-300"],
                 ["Tabungan", formatRupiah(filteredSaving), "text-cyan-200"],
-                ["Sisa", formatRupiah(filteredRemaining), "text-fuchsia-300"],
+                ["Sisa", formatRupiah(filteredRemaining), "text-violet-300"],
               ].map(([title, value, color]) => (
                 <Card key={title} className={cardClass}>
                   <CardContent className="p-5">
@@ -1213,7 +1233,7 @@ export default function EduDashboard() {
               </Card>
             </div>
 
-            {filteredTransactions.length === 0 && <p className="text-slate-400">Belum ada transaksi pada periode ini.</p>}
+            {filteredTransactions.length === 0 && <div className={emptyStateClass}>Belum ada transaksi pada periode ini. Coba tambah pemasukan, pengeluaran, atau tabungan.</div>}
 
             {filteredTransactions.map((item) => (
               <div key={item.id} className="p-4 mb-3 rounded-[28px] bg-slate-900/75 backdrop-blur-xl border border-white/12 shadow-[0_16px_50px_rgba(0,0,0,0.28)] flex justify-between items-center hover:border-cyan-300/30 transition">
@@ -1246,7 +1266,7 @@ export default function EduDashboard() {
               </CardContent>
             </Card>
 
-            {plans.length === 0 && <p className="text-slate-400">Belum ada planning.</p>}
+            {plans.length === 0 && <div className={emptyStateClass}>Belum ada planning. Buat agenda kecil supaya harimu lebih terarah.</div>}
 
             {plans.map((plan) => (
               <div key={plan.id} className="p-4 mb-3 rounded-[28px] bg-slate-900/75 backdrop-blur-xl border border-white/12 shadow-[0_16px_50px_rgba(0,0,0,0.28)] flex justify-between items-center hover:border-cyan-300/30 transition">
