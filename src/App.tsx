@@ -142,9 +142,12 @@ export default function EduDashboard() {
     "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&h=300&fit=crop&crop=faces"
   );
 
-  const inputClass = "bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus-visible:ring-cyan-400";
-  const cardClass = "rounded-3xl shadow-[0_0_45px_rgba(34,211,238,0.08)] bg-white/5 backdrop-blur-xl border border-white/10";
-  const primaryButton = "bg-gradient-to-r from-fuchsia-500 via-indigo-500 to-cyan-400 hover:opacity-90 text-white";
+  const inputClass = "h-10 rounded-xl bg-[#0b1120]/85 border-[#273449] text-slate-100 placeholder:text-slate-500 focus-visible:ring-2 focus-visible:ring-cyan-300/25 focus-visible:border-cyan-300/40 transition-all";
+  const selectClass = "h-10 rounded-xl border border-[#273449] px-3 bg-[#0b1120]/85 text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-300/25 transition-all";
+  const cardClass = "rounded-2xl bg-[#101827]/88 border border-[#243044] shadow-[0_18px_60px_rgba(0,0,0,0.22)] hover:bg-[#121d2f] hover:border-cyan-300/20 transition-all duration-200";
+  const primaryButton = "h-10 rounded-xl bg-gradient-to-r from-slate-200 via-cyan-200 to-sky-300 text-slate-950 font-semibold shadow-[0_12px_30px_rgba(34,211,238,0.12)] hover:brightness-105 active:scale-[0.99] transition-all";
+  const secondaryButton = "h-10 rounded-xl bg-[#101827] border border-[#273449] text-slate-200 hover:bg-[#162237] transition-all";
+  const premiumPanel = "rounded-2xl bg-[#101827]/90 border border-[#243044] shadow-[0_18px_60px_rgba(0,0,0,0.22)]";
 
   useEffect(() => {
     const initAuth = async () => {
@@ -534,6 +537,9 @@ export default function EduDashboard() {
   ];
 
   const randomQuote = quotes[new Date().getDay() % quotes.length];
+  const displayName = user?.email?.split("@")[0] || "Panji";
+  const closestTask = sortedTasks.find((task) => !task.done);
+  const weekBudgetProgress = weeklyBudget <= 0 ? 0 : Math.min(100, Math.round((weeklyExpense / weeklyBudget) * 100));
 
   const chartData = [
     { name: "Pemasukan", value: totalIncome },
@@ -541,7 +547,15 @@ export default function EduDashboard() {
     { name: "Tabungan", value: totalSaving },
   ];
 
-  const chartColors = ["#22c55e", "#f43f5e", "#22d3ee"];
+  const chartColors = ["#4ade80", "#fb7185", "#67e8f9"];
+
+  const menuItems: [Menu, string, string][] = [
+    ["dashboard", "Dashboard", "✦"],
+    ["tasks", "Tugas", "✓"],
+    ["finance", "Keuangan", "Rp"],
+    ["planning", "Planning", "↗"],
+    ["calendar", "Calendar", "◷"],
+  ];
 
   const weeklyChartData = useMemo(() => {
     const days = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
@@ -668,8 +682,8 @@ export default function EduDashboard() {
 
   const menuClass = (menu: Menu) =>
     activeMenu === menu
-      ? "bg-gradient-to-r from-fuchsia-500 via-indigo-500 to-cyan-400 text-white shadow-lg shadow-cyan-500/20"
-      : "bg-white/5 text-slate-300 hover:bg-white/10";
+      ? "bg-gradient-to-r from-slate-200 via-cyan-200 to-sky-300 text-slate-950 shadow-[0_10px_24px_rgba(34,211,238,0.12)]"
+      : "bg-transparent text-slate-400 hover:bg-[#101827] hover:text-white";
 
   if (loading) {
     return <div className="min-h-screen bg-[#020617] text-white flex items-center justify-center">Loading...</div>;
@@ -678,11 +692,11 @@ export default function EduDashboard() {
   if (!user) {
     return (
       <div className="min-h-screen bg-[#020617] text-white flex items-center justify-center p-6 overflow-hidden relative">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(217,70,239,0.25),transparent_35%),radial-gradient(circle_at_bottom_right,rgba(34,211,238,0.25),transparent_35%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(14,165,233,0.14),transparent_35%)]" />
 
-        <Card className="relative z-10 w-full max-w-md bg-white/5 border border-white/10 backdrop-blur-xl rounded-3xl shadow-2xl">
+        <Card className="relative z-10 w-full max-w-md bg-slate-950/45 border border-slate-800 backdrop-blur-xl rounded-3xl shadow-2xl">
           <CardContent className="p-8">
-            <h1 className="text-4xl font-black mb-2 bg-gradient-to-r from-fuchsia-400 via-indigo-300 to-cyan-300 bg-clip-text text-transparent">
+            <h1 className="text-2xl md:text-3xl font-semibold tracking-tight mb-2 bg-gradient-to-r from-fuchsia-400 via-indigo-300 to-cyan-300 bg-clip-text text-transparent">
               Panji Space
             </h1>
             <p className="text-slate-400 mb-6">Login untuk sinkronisasi tugas, keuangan, planning, dan calendar kamu.</p>
@@ -699,7 +713,7 @@ export default function EduDashboard() {
               <Button className={`w-full ${primaryButton}`} onClick={login}>
                 Login
               </Button>
-              <Button className="w-full border-white/10 text-white hover:bg-white/10" variant="outline" onClick={register}>
+              <Button className="w-full border-slate-800 text-white hover:bg-slate-800" variant="outline" onClick={register}>
                 Register
               </Button>
             </div>
@@ -710,22 +724,42 @@ export default function EduDashboard() {
   }
 
   return (
-    <div className="relative flex min-h-screen bg-[#020617] text-white overflow-hidden">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(217,70,239,0.22),transparent_35%),radial-gradient(circle_at_center,rgba(99,102,241,0.16),transparent_35%),radial-gradient(circle_at_bottom_right,rgba(34,211,238,0.22),transparent_35%)]" />
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:44px_44px]" />
+    <div className="relative flex min-h-screen bg-[#060a12] text-slate-100 overflow-hidden selection:bg-cyan-300/25">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_0%,rgba(34,211,238,0.10),transparent_28%),radial-gradient(circle_at_85%_12%,rgba(34,211,238,0.09),transparent_26%),linear-gradient(180deg,rgba(15,23,42,0.18),rgba(7,11,20,0.98))]" />
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.025)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.025)_1px,transparent_1px)] bg-[size:56px_56px] opacity-30" />
 
-      <aside className="relative z-10 w-72 min-h-screen bg-white/5 backdrop-blur-2xl border-r border-white/10 p-5">
-        <div className="text-3xl font-black bg-gradient-to-r from-fuchsia-400 via-indigo-300 to-cyan-300 bg-clip-text text-transparent mb-6">
-          Panji Space
+      <aside className="relative z-20 hidden lg:flex w-[276px] min-h-screen flex-col border-r border-[#243044] bg-[#070b14]/95 p-5 backdrop-blur-xl">
+        <div className="mb-8 flex items-center gap-3 px-1 py-1">
+          <div className="grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-slate-200 via-cyan-200 to-sky-300 text-sm font-black text-slate-950 shadow-[0_12px_32px_rgba(34,211,238,0.14)]">PS</div>
+          <div>
+            <div className="text-lg font-bold tracking-tight text-white">Panji Space</div>
+            <p className="text-xs text-slate-500">Focus • Money • Plan</p>
+          </div>
         </div>
 
-        <div className="flex flex-col items-center bg-gradient-to-br from-fuchsia-500/20 via-indigo-500/20 to-cyan-500/20 backdrop-blur-xl rounded-3xl p-5 text-white mb-6 shadow-xl border border-white/10">
-          <img src={profileImage} className="w-24 h-24 rounded-full object-cover border-4 border-cyan-400 shadow-lg shadow-cyan-400/20 mb-3" />
-          <p className="font-semibold">Panji</p>
-          <p className="text-sm text-slate-300">Real productivity dashboard</p>
-
-          <label className={`mt-4 cursor-pointer px-4 py-2 rounded-xl text-sm shadow ${primaryButton}`}>
-            Upload Foto
+        <div className="mb-6 overflow-hidden rounded-3xl border border-cyan-200/10 bg-gradient-to-b from-[#121b2c] to-[#0b1120] p-3 shadow-[0_14px_48px_rgba(0,0,0,0.18)]">
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <img src={profileImage} className="h-11 w-11 rounded-2xl object-cover ring-1 ring-cyan-200/25" />
+              <span className="absolute -right-1 -top-1 h-3.5 w-3.5 rounded-full border-2 border-[#0b1120] bg-emerald-400 shadow-[0_0_18px_rgba(52,211,153,0.7)]" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold text-white">{displayName}</p>
+              <p className="truncate text-xs text-slate-500">{user.email}</p>
+            </div>
+          </div>
+          <div className="mt-3 grid grid-cols-2 gap-2 text-center">
+            <div className="rounded-2xl border border-white/5 bg-black/20 p-2">
+              <p className="text-sm font-semibold text-white">{savingTargetProgress}%</p>
+              <p className="text-[11px] text-slate-500">Target</p>
+            </div>
+            <div className="rounded-2xl border border-white/5 bg-black/20 p-2">
+              <p className="text-sm font-semibold text-cyan-200">{upcomingTasks.length}</p>
+              <p className="text-[11px] text-slate-500">Deadline</p>
+            </div>
+          </div>
+          <label className="mt-3 block cursor-pointer rounded-xl border border-cyan-200/10 px-3 py-2 text-center text-xs font-medium text-cyan-100/70 hover:border-cyan-200/25 hover:bg-cyan-200/5 hover:text-cyan-100 transition">
+            Edit profil
             <input
               type="file"
               accept="image/*"
@@ -738,143 +772,232 @@ export default function EduDashboard() {
           </label>
         </div>
 
-        <div className="space-y-3">
-          {[
-            ["dashboard", "Dashboard"],
-            ["tasks", "Tugas Kuliah"],
-            ["finance", "Keuangan"],
-            ["planning", "Planning"],
-            ["calendar", "Calendar"],
-          ].map(([key, label]) => (
-            <Button key={key} className={`w-full justify-start rounded-2xl ${menuClass(key as Menu)}`} onClick={() => setActiveMenu(key as Menu)}>
-              {label}
+        <div className="space-y-2">
+          {menuItems.map(([key, label, icon]) => (
+            <Button key={key} className={`w-full justify-start gap-3 h-11 rounded-xl px-3 ${menuClass(key)}`} onClick={() => setActiveMenu(key)}>
+              <span className="w-6 text-center text-sm opacity-90">{icon}</span>
+              <span className="text-sm font-medium">{label}</span>
             </Button>
           ))}
 
-          <Button className="w-full justify-start rounded-2xl bg-rose-500/20 text-rose-300 hover:bg-rose-500/30" onClick={logout}>
+          <Button className="mt-5 w-full justify-start h-11 rounded-xl bg-transparent text-rose-400 hover:bg-rose-500/10 border border-transparent" onClick={logout}>
             Logout
           </Button>
         </div>
       </aside>
 
-      <main className="relative z-10 flex-1 p-8 overflow-y-auto">
+      <div className="fixed bottom-4 left-4 right-4 z-30 grid grid-cols-5 gap-1 rounded-2xl border border-slate-800 bg-slate-950/95 p-1.5 shadow-2xl backdrop-blur-xl lg:hidden">
+        {menuItems.map(([key, label, icon]) => (
+          <button
+            key={key}
+            onClick={() => setActiveMenu(key)}
+            className={`rounded-xl px-2 py-2.5 text-xs font-medium transition-all ${activeMenu === key ? "bg-gradient-to-r from-slate-200 to-cyan-300 text-slate-950" : "text-slate-500 hover:bg-slate-900 hover:text-white"}`}
+          >
+            <span className="block text-sm leading-none">{icon}</span>
+            <span className="mt-1 block truncate">{label}</span>
+          </button>
+        ))}
+      </div>
+
+      <main className="relative z-10 flex-1 p-4 pb-28 md:p-5 xl:p-7 overflow-y-auto">
         {activeMenu === "dashboard" && (
           <>
-            <h1 className="text-4xl font-black mb-2">Halo Panji 👋</h1>
-            <p className="text-slate-400 mb-6">{randomQuote}</p>
+            <div className="mb-6 grid grid-cols-1 gap-4 xl:grid-cols-[1fr_320px]">
+              <Card className="overflow-hidden rounded-3xl border border-cyan-200/10 bg-[linear-gradient(135deg,rgba(16,24,39,0.95),rgba(10,16,28,0.95))] shadow-[0_20px_70px_rgba(0,0,0,0.24)]">
+                <CardContent className="p-5">
+                  <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+                    <div>
+                      <p className="mb-2 text-xs font-medium tracking-[0.14em] uppercase text-cyan-200/60">Workspace</p>
+                      <h1 className="max-w-2xl text-2xl font-semibold tracking-tight text-white md:text-3xl">
+                        Halo, {displayName} 👋
+                      </h1>
+                      <p className="mt-2 max-w-xl text-sm leading-6 text-slate-400">{randomQuote}</p>
+                    </div>
 
-            <div className="grid grid-cols-5 gap-5 mb-8">
+                    <div className="grid grid-cols-3 gap-2 rounded-xl border border-white/5 bg-black/20 p-2 text-center">
+                      <div className="rounded-lg px-3 py-2">
+                        <p className="text-base font-semibold text-white">{tasks.length}</p>
+                        <p className="text-[11px] text-slate-500">Tugas</p>
+                      </div>
+                      <div className="rounded-lg px-3 py-2">
+                        <p className="text-base font-semibold text-emerald-300">{completedTasks}</p>
+                        <p className="text-[11px] text-slate-500">Selesai</p>
+                      </div>
+                      <div className="rounded-lg px-3 py-2">
+                        <p className="text-base font-semibold text-cyan-200">{savingTargetProgress}%</p>
+                        <p className="text-[11px] text-slate-500">Target</p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="rounded-3xl border border-cyan-200/10 bg-[linear-gradient(135deg,rgba(16,24,39,0.95),rgba(10,16,28,0.95))] shadow-[0_20px_70px_rgba(0,0,0,0.24)]">
+                <CardContent className="p-5">
+                  <div className="mb-4 flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-200">Prioritas dekat</p>
+                      <p className="mt-1 text-xs text-slate-500">Deadline 3 hari</p>
+                    </div>
+                    <span className="rounded-full bg-cyan-400/10 px-2.5 py-1 text-xs font-semibold text-cyan-300">{upcomingTasks.length}</span>
+                  </div>
+                  <div className="rounded-xl border border-white/5 bg-black/20 p-4">
+                    <p className="truncate text-sm font-medium text-slate-200">
+                      {closestTask ? closestTask.title : "Tidak ada tugas mendesak"}
+                    </p>
+                    <p className="mt-1 text-xs text-slate-500">{upcomingTasks.length} tugas belum selesai</p>
+                    <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-800">
+                      <div className="h-full rounded-full bg-cyan-300" style={{ width: `${Math.min(100, upcomingTasks.length * 25)}%` }} />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5 mb-5">
               {[
-                ["Total Tugas", tasks.length, "text-sky-300"],
-                ["Tugas Selesai", completedTasks, "text-emerald-300"],
-                ["Tabungan", formatRupiah(totalSaving), "text-cyan-300"],
-                ["Sisa Uang", formatRupiah(remainingMoney), "text-fuchsia-300"],
-                ["Target Bulanan", `${savingTargetProgress}%`, "text-amber-300"],
-              ].map(([title, value, color]) => (
-                <Card key={title} className={`${cardClass} hover:scale-[1.02] transition-all duration-300`}>
-                  <CardContent className="p-5">
-                    <p className="text-slate-400">{title}</p>
-                    <p className={`text-2xl font-bold ${color}`}>{value}</p>
+                ["Total tugas", tasks.length, "text-white", "Tugas aktif", "bg-cyan-300/10 text-cyan-200"],
+                ["Selesai", completedTasks, "text-emerald-300", "Progress belajar", "bg-emerald-400/10 text-emerald-300"],
+                ["Tabungan", formatRupiah(totalSaving), "text-cyan-200", "Dana tersimpan", "bg-cyan-300/10 text-cyan-200"],
+                ["Sisa uang", formatRupiah(remainingMoney), remainingMoney < 0 ? "text-rose-300" : "text-white", "Saldo berjalan", remainingMoney < 0 ? "bg-rose-400/10 text-rose-300" : "bg-violet-400/10 text-violet-300"],
+                ["Target", `${savingTargetProgress}%`, "text-cyan-300", "Bulan ini", "bg-cyan-400/10 text-cyan-300"],
+              ].map(([title, value, color, desc, badge]) => (
+                <Card key={title} className="group max-w-full overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/65 transition-all duration-200 hover:bg-slate-900 hover:border-slate-700">
+                  <CardContent className="p-4">
+                    <div className="mb-3 flex items-start justify-between">
+                      <p className="text-xs font-medium text-slate-500">{title}</p>
+                      <span className={`rounded-full px-1.5 py-0.5 text-[9px] font-bold ${badge}`}>●</span>
+                    </div>
+                    <p className={`text-lg font-semibold tracking-tight truncate ${color}`}>{value}</p>
+                    <p className="mt-2 text-xs text-slate-500">{desc}</p>
                   </CardContent>
                 </Card>
               ))}
             </div>
 
-            <Card className={`${cardClass} mb-6`}>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between gap-4 mb-4">
-                  <div>
-                    <h2 className="text-xl font-bold">Target Tabungan Bulanan</h2>
-                    <p className="text-sm text-slate-400">Atur target, lihat progres, dan nominal yang perlu ditabung per minggu.</p>
-                  </div>
-                  <Input
-                    className={`${inputClass} max-w-56`}
-                    type="number"
-                    value={monthlySavingTarget || ""}
-                    onChange={(e) => setMonthlySavingTarget(Number(e.target.value))}
-                    placeholder="Contoh: 500000"
-                  />
-                </div>
-
-                <div className="grid grid-cols-4 gap-4 mb-4 text-sm">
-                  <div className="rounded-2xl bg-white/5 border border-white/10 p-4">
-                    <p className="text-slate-400">Target bulan ini</p>
-                    <p className="font-bold text-amber-300">{formatRupiah(monthlySavingTarget)}</p>
-                  </div>
-                  <div className="rounded-2xl bg-white/5 border border-white/10 p-4">
-                    <p className="text-slate-400">Sudah terkumpul</p>
-                    <p className="font-bold text-cyan-300">{formatRupiah(monthlySaving)}</p>
-                  </div>
-                  <div className="rounded-2xl bg-white/5 border border-white/10 p-4">
-                    <p className="text-slate-400">Sisa target</p>
-                    <p className="font-bold text-rose-300">{formatRupiah(remainingSavingTarget)}</p>
-                  </div>
-                  <div className="rounded-2xl bg-white/5 border border-white/10 p-4">
-                    <p className="text-slate-400">Per minggu</p>
-                    <p className="font-bold text-emerald-300">{formatRupiah(weeklySavingNeeded)}</p>
-                  </div>
-                </div>
-
-                <div className="h-4 w-full rounded-full bg-white/10 overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-gradient-to-r from-fuchsia-500 via-indigo-500 to-cyan-400"
-                    style={{ width: `${savingTargetProgress}%` }}
-                  />
-                </div>
-                <p className="text-sm text-slate-400 mt-2">Progress: {savingTargetProgress}% dari target bulanan</p>
-              </CardContent>
-            </Card>
-
-            <Card className={`${cardClass} mb-6`}>
-              <CardContent className="p-6">
-                <h2 className="text-xl font-bold mb-4">Insight Otomatis</h2>
-                <div className="grid grid-cols-3 gap-4 text-sm">
-                  <div className="rounded-2xl bg-white/5 border border-white/10 p-4">
-                    <p className="text-slate-400 mb-1">Pengeluaran terbesar</p>
-                    <p className="font-bold text-rose-300 capitalize">
-                      {biggestExpenseCategory ? categoryLabels[biggestExpenseCategory[0] as TransactionCategory] : "Belum ada"}
-                    </p>
-                    <p className="text-slate-400">{biggestExpenseCategory ? formatRupiah(biggestExpenseCategory[1]) : formatRupiah(0)}</p>
+            <div className="grid grid-cols-1 xl:grid-cols-[1.25fr_0.75fr] gap-5 mb-6">
+              <Card className={premiumPanel}>
+                <CardContent className="p-5">
+                  <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                    <div>
+                      <h2 className="text-lg font-semibold text-white">Target Tabungan Bulanan</h2>
+                      <p className="mt-1 text-sm text-slate-500">Pantau target, progress, dan nominal yang perlu ditabung per minggu.</p>
+                    </div>
+                    <Input
+                      className={`${inputClass} md:max-w-44`}
+                      type="number"
+                      value={monthlySavingTarget || ""}
+                      onChange={(e) => setMonthlySavingTarget(Number(e.target.value))}
+                      placeholder="500000"
+                    />
                   </div>
 
-                  <div className="rounded-2xl bg-white/5 border border-white/10 p-4">
-                    <p className="text-slate-400 mb-1">Deadline 3 hari</p>
-                    <p className="font-bold text-amber-300">{upcomingTasks.length} tugas</p>
-                    <p className="text-slate-400">Cek menu Tugas Kuliah</p>
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5 text-sm">
+                    <div className="rounded-2xl border border-white/5 bg-black/20 p-4">
+                      <p className="text-xs text-slate-500">Target</p>
+                      <p className="mt-1 font-bold text-white">{formatRupiah(monthlySavingTarget)}</p>
+                    </div>
+                    <div className="rounded-2xl border border-white/5 bg-black/20 p-4">
+                      <p className="text-xs text-slate-500">Terkumpul</p>
+                      <p className="mt-1 font-bold text-cyan-200">{formatRupiah(monthlySaving)}</p>
+                    </div>
+                    <div className="rounded-2xl border border-white/5 bg-black/20 p-4">
+                      <p className="text-xs text-slate-500">Sisa target</p>
+                      <p className="mt-1 font-bold text-rose-300">{formatRupiah(remainingSavingTarget)}</p>
+                    </div>
+                    <div className="rounded-2xl border border-white/5 bg-black/20 p-4">
+                      <p className="text-xs text-slate-500">Per minggu</p>
+                      <p className="mt-1 font-bold text-emerald-300">{formatRupiah(weeklySavingNeeded)}</p>
+                    </div>
                   </div>
 
-                  <div className="rounded-2xl bg-white/5 border border-white/10 p-4">
-                    <p className="text-slate-400 mb-1">Budget minggu ini</p>
-                    <p className={weeklyBudget > 0 && weeklyExpense > weeklyBudget ? "font-bold text-rose-300" : "font-bold text-emerald-300"}>
-                      {formatRupiah(weeklyExpense)} / {formatRupiah(weeklyBudget)}
-                    </p>
-                    <p className="text-slate-400">{weeklyBudget > 0 && weeklyExpense > weeklyBudget ? "Melebihi budget" : "Masih aman"}</p>
+                  <div className="h-3 w-full overflow-hidden rounded-full bg-slate-800">
+                    <div className="h-full rounded-full bg-gradient-to-r from-slate-200 via-cyan-200 to-sky-300" style={{ width: `${savingTargetProgress}%` }} />
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <div className="grid grid-cols-2 gap-6 mb-6">
-              <Card className={cardClass}>
-                <CardContent className="p-6">
-                  <h2 className="text-xl font-bold mb-4">Progress Tugas</h2>
-                  <div className="mb-3 flex justify-between text-sm text-slate-400">
-                    <span>{completedTasks} tugas selesai</span>
-                    <span>{taskProgress}%</span>
-                  </div>
-                  <div className="w-full bg-white/10 rounded-full h-4">
-                    <div className="bg-gradient-to-r from-fuchsia-500 via-indigo-500 to-cyan-400 h-4 rounded-full" style={{ width: `${taskProgress}%` }} />
+                  <div className="mt-3 flex justify-between text-xs text-slate-500">
+                    <span>Progress tabungan</span>
+                    <span className="font-bold text-cyan-200">{savingTargetProgress}%</span>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className={cardClass}>
+              <Card className={premiumPanel}>
+                <CardContent className="p-5">
+                  <h2 className="text-lg font-semibold text-white">Ringkasan Minggu Ini</h2>
+                  <p className="mt-1 text-sm text-slate-500">Budget dan progress tugas dalam satu pandangan.</p>
+                  <div className="mt-6 space-y-5">
+                    <div>
+                      <div className="mb-2 flex justify-between text-sm">
+                        <span className="text-slate-400">Budget</span>
+                        <span className={weeklyBudget > 0 && weeklyExpense > weeklyBudget ? "font-bold text-rose-300" : "font-bold text-emerald-300"}>{weekBudgetProgress}%</span>
+                      </div>
+                      <div className="h-2 overflow-hidden rounded-full bg-slate-800">
+                        <div className={`h-full rounded-full ${weeklyBudget > 0 && weeklyExpense > weeklyBudget ? "bg-rose-400" : "bg-emerald-400"}`} style={{ width: `${weekBudgetProgress}%` }} />
+                      </div>
+                      <p className="mt-2 text-xs text-slate-500">{formatRupiah(weeklyExpense)} / {formatRupiah(weeklyBudget)}</p>
+                    </div>
+
+                    <div>
+                      <div className="mb-2 flex justify-between text-sm">
+                        <span className="text-slate-400">Progress tugas</span>
+                        <span className="font-bold text-cyan-200">{taskProgress}%</span>
+                      </div>
+                      <div className="h-2 overflow-hidden rounded-full bg-slate-800">
+                        <div className="h-full rounded-full bg-cyan-300" style={{ width: `${taskProgress}%` }} />
+                      </div>
+                      <p className="mt-2 text-xs text-slate-500">{completedTasks} dari {tasks.length} tugas selesai</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card className={`${premiumPanel} mb-6`}>
+              <CardContent className="p-5">
+                <h2 className="text-lg font-semibold mb-5 text-white">Insight Otomatis</h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                  <div className="rounded-xl border border-white/5 bg-black/20 p-4">
+                    <p className="text-xs text-slate-500 mb-2">Pengeluaran terbesar</p>
+                    <p className="font-bold text-rose-300 capitalize">{biggestExpenseCategory ? categoryLabels[biggestExpenseCategory[0] as TransactionCategory] : "Belum ada"}</p>
+                    <p className="mt-1 text-slate-400">{biggestExpenseCategory ? formatRupiah(biggestExpenseCategory[1]) : formatRupiah(0)}</p>
+                  </div>
+                  <div className="rounded-xl border border-white/5 bg-black/20 p-4">
+                    <p className="text-xs text-slate-500 mb-2">Deadline 3 hari</p>
+                    <p className="font-bold text-cyan-300">{upcomingTasks.length} tugas</p>
+                    <p className="mt-1 text-slate-400">Cek menu Tugas Kuliah</p>
+                  </div>
+                  <div className="rounded-xl border border-white/5 bg-black/20 p-4">
+                    <p className="text-xs text-slate-500 mb-2">Budget minggu ini</p>
+                    <p className={weeklyBudget > 0 && weeklyExpense > weeklyBudget ? "font-bold text-rose-300" : "font-bold text-emerald-300"}>
+                      {formatRupiah(weeklyExpense)} / {formatRupiah(weeklyBudget)}
+                    </p>
+                    <p className="mt-1 text-slate-400">{weeklyBudget > 0 && weeklyExpense > weeklyBudget ? "Melebihi budget" : "Masih aman"}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 mb-6">
+              <Card className={premiumPanel}>
                 <CardContent className="p-6">
-                  <h2 className="text-xl font-bold mb-4">Diagram Keuangan</h2>
+                  <h2 className="text-lg font-semibold mb-5 text-white">Progress Tugas</h2>
+                  <div className="mb-3 flex justify-between text-sm text-slate-400">
+                    <span>{completedTasks} tugas selesai</span>
+                    <span className="font-bold text-cyan-200">{taskProgress}%</span>
+                  </div>
+                  <div className="w-full bg-slate-800 rounded-full h-3 overflow-hidden">
+                    <div className="bg-gradient-to-r from-cyan-300 to-blue-500 h-3 rounded-full" style={{ width: `${taskProgress}%` }} />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className={premiumPanel}>
+                <CardContent className="p-6">
+                  <h2 className="text-lg font-semibold mb-4 text-white">Diagram Keuangan</h2>
                   <div className="w-full h-64">
                     <ResponsiveContainer>
                       <PieChart>
-                        <Pie data={chartData} dataKey="value" nameKey="name" outerRadius={90} label>
+                        <Pie data={chartData} dataKey="value" nameKey="name" outerRadius={88} innerRadius={52} paddingAngle={4} label>
                           {chartData.map((_, index) => (
                             <Cell key={index} fill={chartColors[index]} />
                           ))}
@@ -887,19 +1010,19 @@ export default function EduDashboard() {
               </Card>
             </div>
 
-            <Card className={cardClass}>
+            <Card className={premiumPanel}>
               <CardContent className="p-6">
-                <h2 className="text-xl font-bold mb-4">Chart Mingguan</h2>
+                <h2 className="text-lg font-semibold mb-4 text-white">Chart Mingguan</h2>
                 <div className="w-full h-72">
                   <ResponsiveContainer>
                     <BarChart data={weeklyChartData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                      <XAxis dataKey="day" stroke="#94a3b8" />
-                      <YAxis stroke="#94a3b8" />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                      <XAxis dataKey="day" stroke="#64748b" />
+                      <YAxis stroke="#64748b" />
                       <Tooltip />
-                      <Bar dataKey="Pemasukan" fill="#22c55e" radius={[8, 8, 0, 0]} />
-                      <Bar dataKey="Pengeluaran" fill="#f43f5e" radius={[8, 8, 0, 0]} />
-                      <Bar dataKey="Tabungan" fill="#22d3ee" radius={[8, 8, 0, 0]} />
+                      <Bar dataKey="Pemasukan" fill="#34d399" radius={[10, 10, 0, 0]} />
+                      <Bar dataKey="Pengeluaran" fill="#fb7185" radius={[10, 10, 0, 0]} />
+                      <Bar dataKey="Tabungan" fill="#67e8f9" radius={[10, 10, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -910,13 +1033,13 @@ export default function EduDashboard() {
 
         {activeMenu === "tasks" && (
           <>
-            <h1 className="text-4xl font-black mb-6">Tugas Kuliah</h1>
+            <h1 className="text-2xl md:text-3xl font-semibold tracking-tight mb-5">Tugas Kuliah</h1>
 
             <Card className={`${cardClass} mb-6`}>
-              <CardContent className="p-5 flex gap-3">
+              <CardContent className="p-5 flex flex-col xl:flex-row gap-3">
                 <Input className={inputClass} placeholder="Masukkan tugas kuliah" value={taskInput} onChange={(e) => setTaskInput(e.target.value)} />
                 <Input className={inputClass} type="date" value={deadline} onChange={(e) => setDeadline(e.target.value)} />
-                <select className="border border-white/10 rounded-xl px-3 bg-slate-950 text-white" value={priority} onChange={(e) => setPriority(e.target.value as Priority)}>
+                <select className={selectClass} value={priority} onChange={(e) => setPriority(e.target.value as Priority)}>
                   <option value="low">Low</option>
                   <option value="medium">Medium</option>
                   <option value="high">High</option>
@@ -952,7 +1075,7 @@ export default function EduDashboard() {
 
         {activeMenu === "finance" && (
           <>
-            <h1 className="text-4xl font-black mb-6">Keuangan</h1>
+            <h1 className="text-2xl md:text-3xl font-semibold tracking-tight mb-5">Keuangan</h1>
 
             {weeklyBudget > 0 && weeklyExpense > weeklyBudget && (
               <div className="mb-6 rounded-3xl border border-rose-400/30 bg-rose-500/20 p-4 text-rose-100">
@@ -960,17 +1083,17 @@ export default function EduDashboard() {
               </div>
             )}
 
-            <div className="grid grid-cols-4 gap-5 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 xl:gap-5 mb-6">
               {[
                 ["Pemasukan", formatRupiah(filteredIncome), "text-emerald-300"],
                 ["Pengeluaran", formatRupiah(filteredExpense), "text-rose-300"],
-                ["Tabungan", formatRupiah(filteredSaving), "text-cyan-300"],
+                ["Tabungan", formatRupiah(filteredSaving), "text-cyan-200"],
                 ["Sisa", formatRupiah(filteredRemaining), "text-fuchsia-300"],
               ].map(([title, value, color]) => (
                 <Card key={title} className={cardClass}>
                   <CardContent className="p-5">
                     <p className="text-slate-400">{title}</p>
-                    <p className={`text-xl font-bold ${color}`}>{value}</p>
+                    <p className={`text-lg font-semibold ${color}`}>{value}</p>
                   </CardContent>
                 </Card>
               ))}
@@ -978,7 +1101,7 @@ export default function EduDashboard() {
 
             <Card className={`${cardClass} mb-6`}>
               <CardContent className="p-5">
-                <h2 className="text-xl font-bold mb-4">Target Tabungan & Budget</h2>
+                <h2 className="text-lg font-semibold mb-4">Target Tabungan & Budget</h2>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-slate-400 mb-2">Target tabungan bulanan</p>
@@ -1013,11 +1136,11 @@ export default function EduDashboard() {
 
             <Card className={`${cardClass} mb-6`}>
               <CardContent className="p-5">
-                <h2 className="text-xl font-bold mb-4">Filter Tanggal</h2>
-                <div className="flex gap-3">
+                <h2 className="text-lg font-semibold mb-4">Filter Tanggal</h2>
+                <div className="flex flex-col md:flex-row gap-3">
                   <Input className={inputClass} type="date" value={filterStartDate} onChange={(e) => setFilterStartDate(e.target.value)} />
                   <Input className={inputClass} type="date" value={filterEndDate} onChange={(e) => setFilterEndDate(e.target.value)} />
-                  <Button variant="outline" className="border-white/10 text-white hover:bg-white/10" onClick={() => { setFilterStartDate(""); setFilterEndDate(""); }}>
+                  <Button variant="outline" className={secondaryButton} onClick={() => { setFilterStartDate(""); setFilterEndDate(""); }}>
                     Reset
                   </Button>
                   <Button className={primaryButton} onClick={exportFinancePDF}>
@@ -1028,16 +1151,16 @@ export default function EduDashboard() {
             </Card>
 
             <Card className={`${cardClass} mb-6`}>
-              <CardContent className="p-5 flex gap-3">
+              <CardContent className="p-5 flex flex-col xl:flex-row gap-3">
                 <Input className={inputClass} placeholder="Nama transaksi" value={transactionName} onChange={(e) => setTransactionName(e.target.value)} />
                 <Input className={inputClass} type="number" placeholder="Nominal" value={transactionAmount} onChange={(e) => setTransactionAmount(e.target.value)} />
                 <Input className={inputClass} type="date" value={transactionDate} onChange={(e) => setTransactionDate(e.target.value)} />
-                <select className="border border-white/10 rounded-xl px-3 bg-slate-950 text-white" value={transactionType} onChange={(e) => setTransactionType(e.target.value as TransactionType)}>
+                <select className={selectClass} value={transactionType} onChange={(e) => setTransactionType(e.target.value as TransactionType)}>
                   <option value="income">Pemasukan</option>
                   <option value="expense">Pengeluaran</option>
                   <option value="saving">Tabungan</option>
                 </select>
-                <select className="border border-white/10 rounded-xl px-3 bg-slate-950 text-white" value={transactionCategory} onChange={(e) => setTransactionCategory(e.target.value as TransactionCategory)}>
+                <select className={selectClass} value={transactionCategory} onChange={(e) => setTransactionCategory(e.target.value as TransactionCategory)}>
                   <option value="makan">Makan</option>
                   <option value="transport">Transport</option>
                   <option value="kuliah">Kuliah</option>
@@ -1050,20 +1173,20 @@ export default function EduDashboard() {
               </CardContent>
             </Card>
 
-            <div className="grid grid-cols-2 gap-6 mb-6">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
               <Card className={cardClass}>
                 <CardContent className="p-6">
-                  <h2 className="text-xl font-bold mb-4">Grafik Mingguan</h2>
+                  <h2 className="text-lg font-semibold mb-4">Grafik Mingguan</h2>
                   <div className="w-full h-72">
                     <ResponsiveContainer>
                       <BarChart data={weeklyChartData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                        <XAxis dataKey="day" stroke="#94a3b8" />
-                        <YAxis stroke="#94a3b8" />
+                        <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                        <XAxis dataKey="day" stroke="#64748b" />
+                        <YAxis stroke="#64748b" />
                         <Tooltip />
-                        <Bar dataKey="Pemasukan" fill="#22c55e" radius={[8, 8, 0, 0]} />
-                        <Bar dataKey="Pengeluaran" fill="#f43f5e" radius={[8, 8, 0, 0]} />
-                        <Bar dataKey="Tabungan" fill="#22d3ee" radius={[8, 8, 0, 0]} />
+                        <Bar dataKey="Pemasukan" fill="#34d399" radius={[8, 8, 0, 0]} />
+                        <Bar dataKey="Pengeluaran" fill="#fb7185" radius={[8, 8, 0, 0]} />
+                        <Bar dataKey="Tabungan" fill="#67e8f9" radius={[8, 8, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
@@ -1072,17 +1195,17 @@ export default function EduDashboard() {
 
               <Card className={cardClass}>
                 <CardContent className="p-6">
-                  <h2 className="text-xl font-bold mb-4">Grafik Bulanan</h2>
+                  <h2 className="text-lg font-semibold mb-4">Grafik Bulanan</h2>
                   <div className="w-full h-72">
                     <ResponsiveContainer>
                       <BarChart data={monthlyChartData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                        <XAxis dataKey="month" stroke="#94a3b8" />
-                        <YAxis stroke="#94a3b8" />
+                        <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                        <XAxis dataKey="month" stroke="#64748b" />
+                        <YAxis stroke="#64748b" />
                         <Tooltip />
-                        <Bar dataKey="Pemasukan" fill="#22c55e" radius={[8, 8, 0, 0]} />
-                        <Bar dataKey="Pengeluaran" fill="#f43f5e" radius={[8, 8, 0, 0]} />
-                        <Bar dataKey="Tabungan" fill="#22d3ee" radius={[8, 8, 0, 0]} />
+                        <Bar dataKey="Pemasukan" fill="#34d399" radius={[8, 8, 0, 0]} />
+                        <Bar dataKey="Pengeluaran" fill="#fb7185" radius={[8, 8, 0, 0]} />
+                        <Bar dataKey="Tabungan" fill="#67e8f9" radius={[8, 8, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
@@ -1093,7 +1216,7 @@ export default function EduDashboard() {
             {filteredTransactions.length === 0 && <p className="text-slate-400">Belum ada transaksi pada periode ini.</p>}
 
             {filteredTransactions.map((item) => (
-              <div key={item.id} className="p-4 mb-3 rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 shadow flex justify-between items-center">
+              <div key={item.id} className="p-4 mb-3 rounded-[28px] bg-slate-900/75 backdrop-blur-xl border border-white/12 shadow-[0_16px_50px_rgba(0,0,0,0.28)] flex justify-between items-center hover:border-cyan-300/30 transition">
                 <div>
                   <p className="font-semibold">{item.name}</p>
                   <p className="text-sm text-slate-400">
@@ -1110,10 +1233,10 @@ export default function EduDashboard() {
 
         {activeMenu === "planning" && (
           <>
-            <h1 className="text-4xl font-black mb-6">Planning</h1>
+            <h1 className="text-2xl md:text-3xl font-semibold tracking-tight mb-5">Planning</h1>
 
             <Card className={`${cardClass} mb-6`}>
-              <CardContent className="p-5 flex gap-3">
+              <CardContent className="p-5 flex flex-col xl:flex-row gap-3">
                 <Input className={inputClass} placeholder="Contoh: Belajar React" value={planTitle} onChange={(e) => setPlanTitle(e.target.value)} />
                 <Input className={inputClass} type="date" value={planDate} onChange={(e) => setPlanDate(e.target.value)} />
                 <Input className={inputClass} type="time" value={planTime} onChange={(e) => setPlanTime(e.target.value)} />
@@ -1126,7 +1249,7 @@ export default function EduDashboard() {
             {plans.length === 0 && <p className="text-slate-400">Belum ada planning.</p>}
 
             {plans.map((plan) => (
-              <div key={plan.id} className="p-4 mb-3 rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 shadow flex justify-between items-center">
+              <div key={plan.id} className="p-4 mb-3 rounded-[28px] bg-slate-900/75 backdrop-blur-xl border border-white/12 shadow-[0_16px_50px_rgba(0,0,0,0.28)] flex justify-between items-center hover:border-cyan-300/30 transition">
                 <div>
                   <p className="font-semibold">{plan.title}</p>
                   <p className="text-sm text-slate-400">
@@ -1145,35 +1268,35 @@ export default function EduDashboard() {
           <>
             <div className="flex justify-between items-center mb-6">
               <div>
-                <h1 className="text-4xl font-black">Calendar Bulanan</h1>
+                <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">Calendar Bulanan</h1>
                 <p className="text-slate-400">Klik tanggal untuk tambah tugas, drag task untuk pindah deadline.</p>
               </div>
 
               <div className="flex gap-3 items-center">
-                <Button className="bg-white/10 hover:bg-white/20" onClick={() => moveMonth(-1)}>
+                <Button className="bg-slate-800 hover:bg-white/20" onClick={() => moveMonth(-1)}>
                   ←
                 </Button>
                 <h2 className="text-xl font-semibold min-w-48 text-center">
                   {currentDate.toLocaleDateString("id-ID", { month: "long", year: "numeric" })}
                 </h2>
-                <Button className="bg-white/10 hover:bg-white/20" onClick={() => moveMonth(1)}>
+                <Button className="bg-slate-800 hover:bg-white/20" onClick={() => moveMonth(1)}>
                   →
                 </Button>
               </div>
             </div>
 
-            <div className="grid grid-cols-7 gap-3 mb-3 text-center text-sm text-slate-400">
+            <div className="grid grid-cols-7 gap-3 mb-3 text-center text-sm text-slate-400 min-w-[980px]">
               {["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"].map((day) => (
                 <div key={day}>{day}</div>
               ))}
             </div>
 
-            <div className="grid grid-cols-7 gap-3">
+            <div className="overflow-x-auto pb-3"><div className="grid grid-cols-7 gap-3 min-w-[980px]">
               {calendarDaysMonthly.map((day, index) =>
                 day ? (
                   <Card
                     key={day.date}
-                    className="min-h-36 bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-2 cursor-pointer hover:bg-white/10 transition"
+                    className="min-h-36 bg-slate-900/75 backdrop-blur-xl border border-white/12 rounded-[28px] p-2 cursor-pointer hover:bg-slate-800/85 hover:border-cyan-300/30 transition"
                     onClick={() => setSelectedDate(day.date)}
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={(e) => {
@@ -1217,13 +1340,15 @@ export default function EduDashboard() {
               )}
             </div>
 
+            </div>
+
             {selectedDate && (
               <Card className={`${cardClass} mt-6`}>
                 <CardContent className="p-5">
                   <h2 className="font-bold mb-3">Tambah Tugas - {selectedDate}</h2>
-                  <div className="flex gap-3">
+                  <div className="flex flex-col md:flex-row gap-3">
                     <Input className={inputClass} placeholder="Nama tugas" value={taskInput} onChange={(e) => setTaskInput(e.target.value)} />
-                    <select className="border border-white/10 rounded-xl px-3 bg-slate-950 text-white" value={priority} onChange={(e) => setPriority(e.target.value as Priority)}>
+                    <select className={selectClass} value={priority} onChange={(e) => setPriority(e.target.value as Priority)}>
                       <option value="low">Low</option>
                       <option value="medium">Medium</option>
                       <option value="high">High</option>
@@ -1231,7 +1356,7 @@ export default function EduDashboard() {
                     <Button className={primaryButton} onClick={() => addTask(selectedDate)}>
                       Tambah Tugas
                     </Button>
-                    <Button variant="outline" className="border-white/10 text-white hover:bg-white/10" onClick={() => setSelectedDate(null)}>
+                    <Button variant="outline" className={secondaryButton} onClick={() => setSelectedDate(null)}>
                       Batal
                     </Button>
                   </div>
