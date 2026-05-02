@@ -194,46 +194,6 @@ export default function EduDashboard() {
     fetchHolidays();
   }, [currentDate]);
 
-  useEffect(() => {
-    if (!tasks.length || !("Notification" in window)) return;
-
-    if (Notification.permission === "default") {
-      Notification.requestPermission();
-    }
-
-    const checkReminder = () => {
-      if (Notification.permission !== "granted") return;
-
-      const today = formatLocalDate(new Date());
-      const tomorrow = formatLocalDate(addDays(new Date(), 1));
-
-      tasks.forEach((task) => {
-        if (task.done) return;
-
-        const storageKey = `task-reminder-${task.id}-${today}`;
-        if (localStorage.getItem(storageKey)) return;
-
-        if (task.deadline === today) {
-          new Notification("Deadline Hari Ini!", {
-            body: task.title,
-          });
-          localStorage.setItem(storageKey, "sent");
-        }
-
-        if (task.deadline === tomorrow) {
-          new Notification("Deadline Besok!", {
-            body: task.title,
-          });
-          localStorage.setItem(storageKey, "sent");
-        }
-      });
-    };
-
-    checkReminder();
-
-    const interval = window.setInterval(checkReminder, 1000 * 60 * 30);
-    return () => window.clearInterval(interval);
-  }, [tasks]);
 
   const formatLocalDate = (date: Date) => {
     const year = date.getFullYear();
@@ -242,11 +202,6 @@ export default function EduDashboard() {
     return `${year}-${month}-${day}`;
   };
 
-  const addDays = (date: Date, days: number) => {
-    const copy = new Date(date);
-    copy.setDate(copy.getDate() + days);
-    return copy;
-  };
 
   const loadData = async () => {
     if (!user) return;
@@ -806,18 +761,7 @@ export default function EduDashboard() {
         {activeMenu === "dashboard" && (
           <>
             <h1 className="text-4xl font-black mb-2">Halo Panji 👋</h1>
-            <p className="text-slate-400 mb-4">{randomQuote}</p>
-
-            <Button
-              className="mb-6 bg-white/10 hover:bg-white/20 text-white"
-              onClick={() => {
-                if ("Notification" in window) {
-                  Notification.requestPermission();
-                }
-              }}
-            >
-              Aktifkan Notifikasi Deadline
-            </Button>
+            <p className="text-slate-400 mb-6">{randomQuote}</p>
 
             <div className="grid grid-cols-5 gap-5 mb-8">
               {[
@@ -896,7 +840,7 @@ export default function EduDashboard() {
                   <div className="rounded-2xl bg-white/5 border border-white/10 p-4">
                     <p className="text-slate-400 mb-1">Deadline 3 hari</p>
                     <p className="font-bold text-amber-300">{upcomingTasks.length} tugas</p>
-                    <p className="text-slate-400">Prioritaskan high priority</p>
+                    <p className="text-slate-400">Cek menu Tugas Kuliah</p>
                   </div>
 
                   <div className="rounded-2xl bg-white/5 border border-white/10 p-4">
