@@ -205,16 +205,33 @@ export default function EduDashboard() {
       if (Notification.permission !== "granted") return;
 
       const today = formatLocalDate(new Date());
-      const todaysTasks = tasks.filter((task) => !task.done && task.deadline === today);
+      const tomorrow = formatLocalDate(addDays(new Date(), 1));
 
-      todaysTasks.forEach((task) => {
-        new Notification("Tugas Hari Ini!", {
-          body: task.title,
-        });
+      tasks.forEach((task) => {
+        if (task.done) return;
+
+        const storageKey = `task-reminder-${task.id}-${today}`;
+        if (localStorage.getItem(storageKey)) return;
+
+        if (task.deadline === today) {
+          new Notification("Deadline Hari Ini!", {
+            body: task.title,
+          });
+          localStorage.setItem(storageKey, "sent");
+        }
+
+        if (task.deadline === tomorrow) {
+          new Notification("Deadline Besok!", {
+            body: task.title,
+          });
+          localStorage.setItem(storageKey, "sent");
+        }
       });
     };
 
-    const interval = window.setInterval(checkReminder, 1000 * 60 * 60);
+    checkReminder();
+
+    const interval = window.setInterval(checkReminder, 1000 * 60 * 30);
     return () => window.clearInterval(interval);
   }, [tasks]);
 
@@ -223,6 +240,12 @@ export default function EduDashboard() {
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const day = String(date.getDate()).padStart(2, "0");
     return `${year}-${month}-${day}`;
+  };
+
+  const addDays = (date: Date, days: number) => {
+    const copy = new Date(date);
+    copy.setDate(copy.getDate() + days);
+    return copy;
   };
 
   const loadData = async () => {
@@ -783,7 +806,18 @@ export default function EduDashboard() {
         {activeMenu === "dashboard" && (
           <>
             <h1 className="text-4xl font-black mb-2">Halo Panji 👋</h1>
-            <p className="text-slate-400 mb-6">{randomQuote}</p>
+            <p className="text-slate-400 mb-4">{randomQuote}</p>
+
+            <Button
+              className="mb-6 bg-white/10 hover:bg-white/20 text-white"
+              onClick={() => {
+                if ("Notification" in window) {
+                  Notification.requestPermission();
+                }
+              }}
+            >
+              Aktifkan Notifikasi Deadline
+            </Button>
 
             <div className="grid grid-cols-5 gap-5 mb-8">
               {[
