@@ -22,12 +22,17 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error("Supabase env belum diisi. Cek VITE_SUPABASE_URL dan VITE_SUPABASE_ANON_KEY.");
+  throw new Error(
+    "Supabase env belum diisi. Cek VITE_SUPABASE_URL dan VITE_SUPABASE_ANON_KEY."
+  );
 }
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 type Menu = "dashboard" | "tasks" | "finance" | "planning" | "calendar";
+type Priority = "low" | "medium" | "high";
+type TransactionType = "income" | "expense" | "saving";
+type TransactionCategory = "makan" | "transport" | "kuliah" | "hiburan" | "darurat";
 
 type Task = {
   id: string;
@@ -35,6 +40,7 @@ type Task = {
   title: string;
   deadline: string;
   done: boolean;
+  priority: Priority;
 };
 
 type Transaction = {
@@ -42,8 +48,9 @@ type Transaction = {
   user_id: string;
   name: string;
   amount: number;
-  type: "income" | "expense" | "saving";
+  type: TransactionType;
   transaction_date: string;
+  category: TransactionCategory;
 };
 
 type Plan = {
@@ -68,6 +75,29 @@ type CalendarDay = {
   holiday?: Holiday;
 } | null;
 
+const CLOUD_NAME = "dpdc6e6ws";
+const UPLOAD_PRESET = "ml_default";
+
+const categoryLabels: Record<TransactionCategory, string> = {
+  makan: "Makan",
+  transport: "Transport",
+  kuliah: "Kuliah",
+  hiburan: "Hiburan",
+  darurat: "Darurat",
+};
+
+const priorityLabels: Record<Priority, string> = {
+  low: "Low",
+  medium: "Medium",
+  high: "High",
+};
+
+const priorityOrder: Record<Priority, number> = {
+  high: 3,
+  medium: 2,
+  low: 1,
+};
+
 export default function EduDashboard() {
   const [user, setUser] = useState<User | null>(null);
   const [activeMenu, setActiveMenu] = useState<Menu>("dashboard");
@@ -79,15 +109,18 @@ export default function EduDashboard() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [taskInput, setTaskInput] = useState("");
   const [deadline, setDeadline] = useState("");
+  const [priority, setPriority] = useState<Priority>("medium");
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [transactionName, setTransactionName] = useState("");
   const [transactionAmount, setTransactionAmount] = useState("");
-  const [transactionType, setTransactionType] = useState<Transaction["type"]>("expense");
+  const [transactionType, setTransactionType] = useState<TransactionType>("expense");
+  const [transactionCategory, setTransactionCategory] = useState<TransactionCategory>("makan");
   const [transactionDate, setTransactionDate] = useState(new Date().toISOString().slice(0, 10));
 
   const [filterStartDate, setFilterStartDate] = useState("");
   const [filterEndDate, setFilterEndDate] = useState("");
+  const [weeklyBudget, setWeeklyBudget] = useState(0);
 
   const [plans, setPlans] = useState<Plan[]>([]);
   const [planTitle, setPlanTitle] = useState("");
@@ -102,8 +135,9 @@ export default function EduDashboard() {
     "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&h=300&fit=crop&crop=faces"
   );
 
-  const CLOUD_NAME = "dpdc6e6ws";
-  const UPLOAD_PRESET = "ml_default";
+  const inputClass = "bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus-visible:ring-cyan-400";
+  const cardClass = "rounded-3xl shadow-[0_0_45px_rgba(34,211,238,0.08)] bg-white/5 backdrop-blur-xl border border-white/10";
+  const primaryButton = "bg-gradient-to-r from-fuchsia-500 via-indigo-500 to-cyan-400 hover:opacity-90 text-white";
 
   useEffect(() => {
     const initAuth = async () => {
@@ -153,7 +187,7 @@ export default function EduDashboard() {
     const checkReminder = () => {
       if (Notification.permission !== "granted") return;
 
-      const today = new Date().toISOString().slice(0, 10);
+      const today = formatLocalDate(new Date());
       const todaysTasks = tasks.filter((task) => !task.done && task.deadline === today);
 
       todaysTasks.forEach((task) => {
@@ -167,16 +201,19 @@ export default function EduDashboard() {
     return () => window.clearInterval(interval);
   }, [tasks]);
 
+  const formatLocalDate = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
   const loadData = async () => {
     if (!user) return;
 
     const [tasksRes, transactionsRes, plansRes, profileRes] = await Promise.all([
       supabase.from("tasks").select("*").eq("user_id", user.id).order("deadline", { ascending: true }),
-      supabase
-        .from("transactions")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("transaction_date", { ascending: false }),
+      supabase.from("transactions").select("*").eq("user_id", user.id).order("transaction_date", { ascending: false }),
       supabase.from("plans").select("*").eq("user_id", user.id).order("plan_date", { ascending: true }),
       supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(),
     ]);
@@ -231,6 +268,7 @@ export default function EduDashboard() {
         title: taskInput.trim(),
         deadline: taskDeadline,
         done: false,
+        priority,
       })
       .select()
       .single();
@@ -240,6 +278,7 @@ export default function EduDashboard() {
     setTasks((prev) => [...prev, data as Task]);
     setTaskInput("");
     setDeadline("");
+    setPriority("medium");
     setSelectedDate(null);
   };
 
@@ -282,6 +321,7 @@ export default function EduDashboard() {
         amount: Number(transactionAmount),
         type: transactionType,
         transaction_date: transactionDate,
+        category: transactionCategory,
       })
       .select()
       .single();
@@ -292,7 +332,8 @@ export default function EduDashboard() {
     setTransactionName("");
     setTransactionAmount("");
     setTransactionType("expense");
-    setTransactionDate(new Date().toISOString().slice(0, 10));
+    setTransactionCategory("makan");
+    setTransactionDate(formatLocalDate(new Date()));
   };
 
   const deleteTransaction = async (id: string) => {
@@ -321,7 +362,7 @@ export default function EduDashboard() {
 
     setPlans((prev) => [...prev, data as Plan]);
     setPlanTitle("");
-    setPlanDate(new Date().toISOString().slice(0, 10));
+    setPlanDate(formatLocalDate(new Date()));
     setPlanTime("");
   };
 
@@ -375,6 +416,7 @@ export default function EduDashboard() {
 
   const getTaskColor = (task: Task) => {
     if (task.done) return "bg-emerald-500/25 border-emerald-400/30 text-emerald-100";
+    if (task.priority === "high") return "bg-fuchsia-500/25 border-fuchsia-400/30 text-fuchsia-100";
 
     const today = new Date();
     const due = new Date(task.deadline);
@@ -397,6 +439,51 @@ export default function EduDashboard() {
     .reduce((total, item) => total + Number(item.amount), 0);
 
   const remainingMoney = totalIncome - totalExpense - totalSaving;
+
+  const sortedTasks = useMemo(() => {
+    return [...tasks].sort((a, b) => {
+      const priorityDiff = priorityOrder[b.priority || "medium"] - priorityOrder[a.priority || "medium"];
+      const deadlineDiff = new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
+      return priorityDiff || deadlineDiff;
+    });
+  }, [tasks]);
+
+  const weeklyExpense = useMemo(() => {
+    const now = new Date();
+    const weekStart = new Date(now);
+    weekStart.setHours(0, 0, 0, 0);
+    weekStart.setDate(now.getDate() - now.getDay());
+
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6);
+    weekEnd.setHours(23, 59, 59, 999);
+
+    return transactions
+      .filter((item) => {
+        const date = new Date(item.transaction_date);
+        return item.type === "expense" && date >= weekStart && date <= weekEnd;
+      })
+      .reduce((total, item) => total + Number(item.amount), 0);
+  }, [transactions]);
+
+  const biggestExpenseCategory = useMemo(() => {
+    const totals = transactions
+      .filter((item) => item.type === "expense")
+      .reduce((acc, item) => {
+        const category = item.category || "makan";
+        acc[category] = (acc[category] || 0) + Number(item.amount);
+        return acc;
+      }, {} as Record<TransactionCategory, number>);
+
+    return Object.entries(totals).sort((a, b) => b[1] - a[1])[0];
+  }, [transactions]);
+
+  const upcomingTasks = useMemo(() => {
+    return tasks.filter((task) => {
+      const diff = Math.ceil((new Date(task.deadline).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+      return !task.done && diff <= 3;
+    });
+  }, [tasks]);
 
   const filteredTransactions = useMemo(() => {
     return transactions.filter((item) => {
@@ -450,7 +537,7 @@ export default function EduDashboard() {
     return Array.from({ length: 7 }).map((_, index) => {
       const date = new Date(start);
       date.setDate(start.getDate() + index);
-      const key = date.toISOString().slice(0, 10);
+      const key = formatLocalDate(date);
       const dayTransactions = transactions.filter((item) => item.transaction_date === key);
 
       return {
@@ -492,15 +579,6 @@ export default function EduDashboard() {
       };
     });
   }, [transactions]);
-
-
-  const formatLocalDate = (date: Date) => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-
-  return `${year}-${month}-${day}`;
-};
 
   const calendarDaysMonthly = useMemo<CalendarDay[]>(() => {
     const year = currentDate.getFullYear();
@@ -558,7 +636,7 @@ export default function EduDashboard() {
       const type = item.type === "income" ? "Pemasukan" : item.type === "expense" ? "Pengeluaran" : "Tabungan";
 
       doc.text(
-        `${index + 1}. ${item.transaction_date} - ${item.name} - ${type} - ${formatRupiah(Number(item.amount))}`,
+        `${index + 1}. ${item.transaction_date} - ${item.name} - ${type} - ${categoryLabels[item.category || "makan"]} - ${formatRupiah(Number(item.amount))}`,
         14,
         y
       );
@@ -577,10 +655,6 @@ export default function EduDashboard() {
     activeMenu === menu
       ? "bg-gradient-to-r from-fuchsia-500 via-indigo-500 to-cyan-400 text-white shadow-lg shadow-cyan-500/20"
       : "bg-white/5 text-slate-300 hover:bg-white/10";
-
-  const inputClass = "bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus-visible:ring-cyan-400";
-  const cardClass = "rounded-3xl shadow-[0_0_45px_rgba(34,211,238,0.08)] bg-white/5 backdrop-blur-xl border border-white/10";
-  const primaryButton = "bg-gradient-to-r from-fuchsia-500 via-indigo-500 to-cyan-400 hover:opacity-90 text-white";
 
   if (loading) {
     return <div className="min-h-screen bg-[#020617] text-white flex items-center justify-center">Loading...</div>;
@@ -690,6 +764,35 @@ export default function EduDashboard() {
               ))}
             </div>
 
+            <Card className={`${cardClass} mb-6`}>
+              <CardContent className="p-6">
+                <h2 className="text-xl font-bold mb-4">Insight Otomatis</h2>
+                <div className="grid grid-cols-3 gap-4 text-sm">
+                  <div className="rounded-2xl bg-white/5 border border-white/10 p-4">
+                    <p className="text-slate-400 mb-1">Pengeluaran terbesar</p>
+                    <p className="font-bold text-rose-300 capitalize">
+                      {biggestExpenseCategory ? categoryLabels[biggestExpenseCategory[0] as TransactionCategory] : "Belum ada"}
+                    </p>
+                    <p className="text-slate-400">{biggestExpenseCategory ? formatRupiah(biggestExpenseCategory[1]) : formatRupiah(0)}</p>
+                  </div>
+
+                  <div className="rounded-2xl bg-white/5 border border-white/10 p-4">
+                    <p className="text-slate-400 mb-1">Deadline 3 hari</p>
+                    <p className="font-bold text-amber-300">{upcomingTasks.length} tugas</p>
+                    <p className="text-slate-400">Prioritaskan high priority</p>
+                  </div>
+
+                  <div className="rounded-2xl bg-white/5 border border-white/10 p-4">
+                    <p className="text-slate-400 mb-1">Budget minggu ini</p>
+                    <p className={weeklyBudget > 0 && weeklyExpense > weeklyBudget ? "font-bold text-rose-300" : "font-bold text-emerald-300"}>
+                      {formatRupiah(weeklyExpense)} / {formatRupiah(weeklyBudget)}
+                    </p>
+                    <p className="text-slate-400">{weeklyBudget > 0 && weeklyExpense > weeklyBudget ? "Melebihi budget" : "Masih aman"}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             <div className="grid grid-cols-2 gap-6 mb-6">
               <Card className={cardClass}>
                 <CardContent className="p-6">
@@ -752,6 +855,11 @@ export default function EduDashboard() {
               <CardContent className="p-5 flex gap-3">
                 <Input className={inputClass} placeholder="Masukkan tugas kuliah" value={taskInput} onChange={(e) => setTaskInput(e.target.value)} />
                 <Input className={inputClass} type="date" value={deadline} onChange={(e) => setDeadline(e.target.value)} />
+                <select className="border border-white/10 rounded-xl px-3 bg-slate-950 text-white" value={priority} onChange={(e) => setPriority(e.target.value as Priority)}>
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                </select>
                 <Button className={primaryButton} onClick={() => addTask()}>
                   Tambah
                 </Button>
@@ -760,11 +868,12 @@ export default function EduDashboard() {
 
             {tasks.length === 0 && <p className="text-slate-400">Belum ada tugas kuliah.</p>}
 
-            {tasks.map((task) => (
+            {sortedTasks.map((task) => (
               <div key={task.id} className={`p-4 mb-3 rounded-3xl border shadow flex justify-between items-center ${getTaskColor(task)}`}>
                 <div>
                   <p className={`font-semibold ${task.done ? "line-through" : ""}`}>{task.title}</p>
                   <p className="text-sm opacity-80">Deadline: {getCountdown(task.deadline)}</p>
+                  <p className="text-xs opacity-80">Priority: {priorityLabels[task.priority || "medium"]}</p>
                 </div>
 
                 <div className="flex gap-2">
@@ -784,6 +893,12 @@ export default function EduDashboard() {
           <>
             <h1 className="text-4xl font-black mb-6">Keuangan</h1>
 
+            {weeklyBudget > 0 && weeklyExpense > weeklyBudget && (
+              <div className="mb-6 rounded-3xl border border-rose-400/30 bg-rose-500/20 p-4 text-rose-100">
+                ⚠️ Pengeluaran minggu ini sudah melewati budget: {formatRupiah(weeklyExpense)} dari {formatRupiah(weeklyBudget)}
+              </div>
+            )}
+
             <div className="grid grid-cols-4 gap-5 mb-6">
               {[
                 ["Pemasukan", formatRupiah(filteredIncome), "text-emerald-300"],
@@ -799,6 +914,24 @@ export default function EduDashboard() {
                 </Card>
               ))}
             </div>
+
+            <Card className={`${cardClass} mb-6`}>
+              <CardContent className="p-5">
+                <h2 className="text-xl font-bold mb-4">Budget Mingguan</h2>
+                <div className="flex gap-3 items-center">
+                  <Input
+                    className={inputClass}
+                    type="number"
+                    placeholder="Contoh: 150000"
+                    value={weeklyBudget || ""}
+                    onChange={(e) => setWeeklyBudget(Number(e.target.value))}
+                  />
+                  <div className="text-sm text-slate-400">
+                    Pengeluaran minggu ini: <span className="text-rose-300 font-semibold">{formatRupiah(weeklyExpense)}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
             <Card className={`${cardClass} mb-6`}>
               <CardContent className="p-5">
@@ -821,10 +954,17 @@ export default function EduDashboard() {
                 <Input className={inputClass} placeholder="Nama transaksi" value={transactionName} onChange={(e) => setTransactionName(e.target.value)} />
                 <Input className={inputClass} type="number" placeholder="Nominal" value={transactionAmount} onChange={(e) => setTransactionAmount(e.target.value)} />
                 <Input className={inputClass} type="date" value={transactionDate} onChange={(e) => setTransactionDate(e.target.value)} />
-                <select className="border border-white/10 rounded-xl px-3 bg-slate-950 text-white" value={transactionType} onChange={(e) => setTransactionType(e.target.value as Transaction["type"])}>
+                <select className="border border-white/10 rounded-xl px-3 bg-slate-950 text-white" value={transactionType} onChange={(e) => setTransactionType(e.target.value as TransactionType)}>
                   <option value="income">Pemasukan</option>
                   <option value="expense">Pengeluaran</option>
                   <option value="saving">Tabungan</option>
+                </select>
+                <select className="border border-white/10 rounded-xl px-3 bg-slate-950 text-white" value={transactionCategory} onChange={(e) => setTransactionCategory(e.target.value as TransactionCategory)}>
+                  <option value="makan">Makan</option>
+                  <option value="transport">Transport</option>
+                  <option value="kuliah">Kuliah</option>
+                  <option value="hiburan">Hiburan</option>
+                  <option value="darurat">Darurat</option>
                 </select>
                 <Button className={primaryButton} onClick={addTransaction}>
                   Tambah
@@ -879,7 +1019,7 @@ export default function EduDashboard() {
                 <div>
                   <p className="font-semibold">{item.name}</p>
                   <p className="text-sm text-slate-400">
-                    {item.transaction_date} - {item.type === "income" ? "Pemasukan" : item.type === "expense" ? "Pengeluaran" : "Tabungan"} - {formatRupiah(Number(item.amount))}
+                    {item.transaction_date} - {item.type === "income" ? "Pemasukan" : item.type === "expense" ? "Pengeluaran" : "Tabungan"} - {categoryLabels[item.category || "makan"]} - {formatRupiah(Number(item.amount))}
                   </p>
                 </div>
                 <Button size="sm" variant="destructive" onClick={() => deleteTransaction(item.id)}>
@@ -1005,6 +1145,11 @@ export default function EduDashboard() {
                   <h2 className="font-bold mb-3">Tambah Tugas - {selectedDate}</h2>
                   <div className="flex gap-3">
                     <Input className={inputClass} placeholder="Nama tugas" value={taskInput} onChange={(e) => setTaskInput(e.target.value)} />
+                    <select className="border border-white/10 rounded-xl px-3 bg-slate-950 text-white" value={priority} onChange={(e) => setPriority(e.target.value as Priority)}>
+                      <option value="low">Low</option>
+                      <option value="medium">Medium</option>
+                      <option value="high">High</option>
+                    </select>
                     <Button className={primaryButton} onClick={() => addTask(selectedDate)}>
                       Tambah Tugas
                     </Button>
